@@ -2,6 +2,7 @@
 ダイスロール関連のコマンド処理
 """
 import discord
+from discord import app_commands
 from discord.ext import commands
 from typing import Dict, Any, List, Optional
 
@@ -31,57 +32,59 @@ def setup_roll_command(bot: commands.Bot):
     引数:
         bot: コマンドを追加するBotインスタンス
     """
-    @bot.command(name='roll', help='ダイスを振ります。\n例: !roll 1d6, !roll 2d10+3, !roll d20-1')
-    async def roll_dice_command(ctx: commands.Context, *, dice_str: str = None):
+    # スラッシュコマンドとして定義
+    @bot.tree.command(name='roll', description='ダイスを振ります。例: 1d6, 2d10+3, d20-1')
+    @app_commands.describe(dice_str='振りたいダイス (例: 1d6, 2d10+3, d20-1)')
+    async def roll_dice_command(interaction: discord.Interaction, dice_str: str = None):
         """ダイスロールコマンド"""
         try:
             if not dice_str:
-                await send_help_message(ctx)
+                await send_help_message(interaction)
                 return
                 
             if dice_str.lower() == 'help':
-                await send_help_message(ctx)
+                await send_help_message(interaction)
                 return
             
             # ダイスロール実行
             result = roll_complex_dice(dice_str)
             
             if "error" in result:
-                await ctx.send(f"エラー: {result['error']}")
+                await interaction.response.send_message(f"エラー: {result['error']}", ephemeral=True)
                 return
                 
             # Embedの作成
-            embed = create_dice_embed(ctx, result)
+            embed = create_dice_embed(interaction, result)
             
             # ビューの作成と設定
-            view = DiceRollView(dice_str, ctx)
+            view = DiceRollView(dice_str, interaction)
             view.set_history_callback(update_roll_history)
             
             # 結果を送信
-            await ctx.send(embed=embed, view=view)
+            await interaction.response.send_message(embed=embed, view=view)
             
             # ロール履歴に追加
-            update_roll_history(ctx.author.id, result)
+            update_roll_history(interaction.user.id, result)
                 
         except Exception as e:
             logger.error(f"ロールコマンド処理中にエラー: {e}")
-            await ctx.send(f"コマンド処理中にエラーが発生しました: {str(e)}")
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"コマンド処理中にエラーが発生しました: {str(e)}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"コマンド処理中にエラーが発生しました: {str(e)}", ephemeral=True)
     
-    @roll_dice_command.error
-    async def roll_dice_error(ctx, error):
-        """ロールコマンドのエラーハンドラ"""
-        if isinstance(error, commands.MissingRequiredArgument):
-            await send_help_message(ctx)
-        else:
-            logger.error(f"ロールコマンドエラー: {error}")
-            await ctx.send(f"エラーが発生しました: {str(error)}")
+    # ヘルプコマンド
+    @bot.tree.command(name='dice_help', description='ダイスボットの使い方を表示します')
+    async def roll_help_command(interaction: discord.Interaction):
+        """ダイスボットのヘルプを表示"""
+        await send_help_message(interaction)
 
-async def send_help_message(ctx: commands.Context):
+async def send_help_message(interaction: discord.Interaction):
     """
     ヘルプメッセージを送信する
     
     引数:
-        ctx: コマンドコンテキスト
+        interaction: インタラクション
     """
     help_embed = discord.Embed(
         title="ダイスボットの使い方",
@@ -92,9 +95,9 @@ async def send_help_message(ctx: commands.Context):
     help_embed.add_field(
         name="基本的な使い方",
         value=(
-            "`!roll NdS` - N個のS面ダイスを振る\n"
-            "`!roll d20` - 20面ダイスを1個振る\n"
-            "`!roll 2d6` - 6面ダイスを2個振る"
+            "`/roll NdS` - N個のS面ダイスを振る\n"
+            "`/roll d20` - 20面ダイスを1個振る\n"
+            "`/roll 2d6` - 6面ダイスを2個振る"
         ),
         inline=False
     )
@@ -102,8 +105,8 @@ async def send_help_message(ctx: commands.Context):
     help_embed.add_field(
         name="修正値を追加",
         value=(
-            "`!roll 1d20+5` - 20面ダイスを振り、結果に5を加える\n"
-            "`!roll 2d6-1` - 6面ダイスを2個振り、結果から1を引く"
+            "`/roll 1d20+5` - 20面ダイスを振り、結果に5を加える\n"
+            "`/roll 2d6-1` - 6面ダイスを2個振り、結果から1を引く"
         ),
         inline=False
     )
@@ -111,15 +114,15 @@ async def send_help_message(ctx: commands.Context):
     help_embed.add_field(
         name="複数のダイス",
         value=(
-            "`!roll 1d20+2d4` - 20面ダイス1個と4面ダイス2個を振る\n"
-            "`!roll 2d8+1d6+3` - 8面ダイス2個と6面ダイス1個を振り、3を加える"
+            "`/roll 1d20+2d4` - 20面ダイス1個と4面ダイス2個を振る\n"
+            "`/roll 2d8+1d6+3` - 8面ダイス2個と6面ダイス1個を振り、3を加える"
         ),
         inline=False
     )
     
     help_embed.add_field(
         name="履歴の表示",
-        value="`!history` - あなたの過去10回分のダイスロール履歴を表示します",
+        value="`/history` - あなたの過去10回分のダイスロール履歴を表示します",
         inline=False
     )
     
@@ -133,7 +136,7 @@ async def send_help_message(ctx: commands.Context):
         inline=False
     )
     
-    await ctx.send(embed=help_embed)
+    await interaction.response.send_message(embed=help_embed, ephemeral=True)
 
 def update_roll_history(user_id: int, result: Dict[str, Any]):
     """

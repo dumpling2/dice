@@ -2,6 +2,7 @@
 ダイスロール履歴に関するコマンド処理
 """
 import discord
+from discord import app_commands
 from discord.ext import commands
 from typing import Dict, Any, List
 
@@ -25,20 +26,20 @@ def setup_history_command(bot: commands.Bot):
     引数:
         bot: コマンドを追加するBotインスタンス
     """
-    @bot.command(name='history', help='あなたの過去10回分のロール履歴を表示します。')
-    async def show_history(ctx: commands.Context):
+    @bot.tree.command(name='history', description='あなたの過去10回分のロール履歴を表示します。')
+    async def show_history(interaction: discord.Interaction):
         """ロール履歴表示コマンド"""
         try:
-            user_id = ctx.author.id
+            user_id = interaction.user.id
             history = get_roll_history(user_id)
             
             if not history:
-                await ctx.send("ロール履歴がありません。`!roll`コマンドでダイスを振ってみましょう！")
+                await interaction.response.send_message("ロール履歴がありません。`/roll`コマンドでダイスを振ってみましょう！", ephemeral=True)
                 return
                 
             # 履歴の概要Embedを作成
             embed = discord.Embed(
-                title=f"🎲 {ctx.author.display_name}さんのロール履歴",
+                title=f"🎲 {interaction.user.display_name}さんのロール履歴",
                 description=f"最近の{len(history)}回分のロール履歴です",
                 color=discord.Color.blue()
             )
@@ -66,14 +67,11 @@ def setup_history_command(bot: commands.Bot):
                     inline=False
                 )
             
-            await ctx.send(embed=embed)
+            await interaction.response.send_message(embed=embed)
                 
         except Exception as e:
             logger.error(f"履歴コマンド処理中にエラー: {e}")
-            await ctx.send(f"コマンド処理中にエラーが発生しました: {str(e)}")
-    
-    @show_history.error
-    async def history_error(ctx, error):
-        """履歴コマンドのエラーハンドラ"""
-        logger.error(f"履歴コマンドエラー: {error}")
-        await ctx.send(f"エラーが発生しました: {str(error)}") 
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"コマンド処理中にエラーが発生しました: {str(e)}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"コマンド処理中にエラーが発生しました: {str(e)}", ephemeral=True) 

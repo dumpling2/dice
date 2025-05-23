@@ -13,7 +13,6 @@ load_dotenv()
 BOT_CONFIG: Dict[str, Any] = {
     # Discord API関連
     'BOT_TOKEN': os.getenv('DISCORD_BOT_TOKEN', ''),
-    'COMMAND_PREFIX': os.getenv('COMMAND_PREFIX', '!'),
     
     # ロギング設定
     'LOG_LEVEL': getattr(logging, os.getenv('LOG_LEVEL', 'INFO'), logging.INFO),

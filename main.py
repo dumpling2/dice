@@ -20,9 +20,7 @@ def check_env_file():
         with open(env_path, 'w', encoding='utf-8') as f:
             f.write("# Discord Bot Token - 実際のトークンに置き換えてください\n")
             f.write("DISCORD_BOT_TOKEN=your_bot_token_here\n\n")
-            f.write("# コマンドプレフィックス設定（デフォルト: !）\n")
-            f.write("COMMAND_PREFIX=!\n")
-            f.write("\n# ロギングレベル（INFO/DEBUG/WARNING/ERROR）\n")
+            f.write("# ロギングレベル（INFO/DEBUG/WARNING/ERROR）\n")
             f.write("LOG_LEVEL=INFO\n")
         print(f".envファイルが作成されました: {env_path}")
         print("DISCORD_BOT_TOKENを設定してください。")

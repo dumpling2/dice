@@ -18,12 +18,12 @@ from dice.src.utils.logger import get_logger
 
 logger = get_logger()
 
-def create_dice_embed(ctx: commands.Context, result: Dict[str, Any]) -> discord.Embed:
+def create_dice_embed(interaction: discord.Interaction, result: Dict[str, Any]) -> discord.Embed:
     """
     ダイスロール結果用のEmbedsを作成する
     
     引数:
-        ctx: コマンドコンテキスト
+        interaction: インタラクション
         result: ダイスロール結果
         
     戻り値:
@@ -45,13 +45,13 @@ def create_dice_embed(ctx: commands.Context, result: Dict[str, Any]) -> discord.
         # Embedを作成
         embed = discord.Embed(
             title=f"🎲 ダイスロール: {result['input']}",
-            description=f"{ctx.author.display_name}さんのロール結果",
+            description=f"{interaction.user.display_name}さんのロール結果",
             color=color,
             timestamp=datetime.datetime.now()
         )
         
         # アイコンを設定
-        embed.set_thumbnail(url=ctx.author.display_avatar.url)
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
         
         # 各ダイスの詳細を表示
         for detail in result["details"]:

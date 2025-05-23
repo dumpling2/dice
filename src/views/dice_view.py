@@ -22,11 +22,11 @@ logger = get_logger()
 
 class DiceRollView(discord.ui.View):
     """ダイスロール結果に付けるボタン付きビュー"""
-    def __init__(self, dice_str: str, ctx: commands.Context):
+    def __init__(self, dice_str: str, interaction: discord.Interaction):
         timeout = get_config('BUTTON_TIMEOUT', 60)
         super().__init__(timeout=timeout)  # 設定された秒数後にボタンを無効化
         self.dice_str = dice_str
-        self.ctx = ctx
+        self.interaction = interaction
         self.roll_history_callback = None
 
     def set_history_callback(self, callback):
@@ -41,7 +41,7 @@ class DiceRollView(discord.ui.View):
     @discord.ui.button(label="再ロール", style=discord.ButtonStyle.primary, emoji="🎲")
     async def reroll_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """再ロールボタンが押された時の処理"""
-        if interaction.user.id != self.ctx.author.id:
+        if interaction.user.id != self.interaction.user.id:
             await interaction.response.send_message("他の人のロールは再ロールできません", ephemeral=True)
             return
 
@@ -54,14 +54,14 @@ class DiceRollView(discord.ui.View):
                 return
                 
             # Embedの作成
-            embed = create_dice_embed(self.ctx, result)
+            embed = create_dice_embed(interaction, result)
             
             # 結果を更新
             await interaction.response.edit_message(embed=embed, view=self)
             
             # ロール履歴に追加
             if self.roll_history_callback:
-                self.roll_history_callback(self.ctx.author.id, result)
+                self.roll_history_callback(interaction.user.id, result)
                 
         except Exception as e:
             logger.error(f"再ロール中にエラーが発生: {e}")

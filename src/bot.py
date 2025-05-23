@@ -2,6 +2,7 @@
 Discord ダイスボット メインアプリケーション
 """
 import discord
+from discord import app_commands
 from discord.ext import commands
 import logging
 import os
@@ -32,22 +33,30 @@ def start_bot(log_level: int = logging.INFO):
     intents = discord.Intents.default()
     intents.message_content = True
     
-    command_prefix = get_config('COMMAND_PREFIX', '!')
-    bot = commands.Bot(command_prefix=command_prefix, intents=intents)
+    # スラッシュコマンド対応のため、command_prefixは不要に
+    bot = commands.Bot(command_prefix='/', intents=intents)
     
     # コマンドの設定
     @bot.event
     async def on_ready():
         """ボット起動完了時のイベントハンドラ"""
         logger.info(f"{bot.user} としてログインしました")
-        logger.info(f"コマンドプレフィックス: {command_prefix}")
+        logger.info("スラッシュコマンドを準備しています...")
+        
+        # スラッシュコマンドをサーバーに同期
+        try:
+            synced = await bot.tree.sync()
+            logger.info(f"{len(synced)}個のスラッシュコマンドを同期しました")
+        except Exception as e:
+            logger.error(f"スラッシュコマンドの同期中にエラーが発生しました: {e}")
+        
         logger.info("ダイスボットの準備が完了しました")
     
     # コマンドのセットアップ
     setup_roll_command(bot)
     setup_history_command(bot)
     
-    # エラーハンドリング
+    # エラーハンドリング（スラッシュコマンドのエラーは各コマンドで捕捉）
     @bot.event
     async def on_command_error(ctx, error):
         """グローバルコマンドエラーハンドラ"""
