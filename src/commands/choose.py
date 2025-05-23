@@ -38,6 +38,25 @@ def setup_choose_command(bot: commands.Bot):
         description="ランダム選択コマンド",
     )
     
+    # シンプルなテストコマンドの追加（グループ外）
+    @bot.tree.command(name="test", description="テストコマンド")
+    async def test_command(interaction: discord.Interaction):
+        await interaction.response.send_message("テストコマンドが実行されました！", ephemeral=True)
+    
+    # ランダム選択コマンド（シンプルなバージョン - グループ外）
+    @bot.tree.command(name="random_pick", description="リストからランダムに選択します")
+    async def random_pick(
+        interaction: discord.Interaction, 
+        items: str
+    ):
+        item_list = [item.strip() for item in items.split(',') if item.strip()]
+        if not item_list:
+            await interaction.response.send_message("選択肢を入力してください。カンマ区切りで複数指定できます。", ephemeral=True)
+            return
+            
+        selected, _ = select_random_item(item_list)
+        await interaction.response.send_message(f"選ばれたのは: **{selected}**")
+    
     @choose_group.command(name="one", description="リストからランダムに1つの項目を選択します")
     async def choose_one(
         interaction: discord.Interaction, 

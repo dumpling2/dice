@@ -45,10 +45,23 @@ def start_bot(log_level: int = logging.INFO):
         logger.info(f"{bot.user} としてログインしました")
         logger.info("スラッシュコマンドを準備しています...")
         
+        # 全てのコマンドを表示（デバッグ用）
+        all_commands = []
+        for cmd in bot.tree.get_commands():
+            all_commands.append(f"{cmd.name} ({type(cmd).__name__})")
+        
+        logger.info(f"登録されているコマンド: {', '.join(all_commands)}")
+        
         # スラッシュコマンドをサーバーに同期
         try:
+            # グローバルコマンドを同期
             synced = await bot.tree.sync()
-            logger.info(f"{len(synced)}個のスラッシュコマンドを同期しました")
+            logger.info(f"{len(synced)}個のグローバルスラッシュコマンドを同期しました")
+            
+            # 念のため特定のギルドにも同期（必要に応じてIDを変更）
+            # guild = discord.Object(id=123456789012345678)  # 実際のギルドIDを指定
+            # guild_synced = await bot.tree.sync(guild=guild)
+            # logger.info(f"{len(guild_synced)}個のギルドスラッシュコマンドを同期しました")
         except Exception as e:
             logger.error(f"スラッシュコマンドの同期中にエラーが発生しました: {e}")
         

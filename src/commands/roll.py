@@ -78,6 +78,12 @@ def setup_roll_command(bot: commands.Bot):
     async def roll_help_command(interaction: discord.Interaction):
         """ダイスボットのヘルプを表示"""
         await send_help_message(interaction)
+        
+    # 追加のヘルプコマンド（シンプルな名前）
+    @bot.tree.command(name='help', description='ダイスボットの使い方を表示します')
+    async def help_command(interaction: discord.Interaction):
+        """ダイスボットのヘルプを表示（シンプルなコマンド名）"""
+        await send_help_message(interaction)
 
 async def send_help_message(interaction: discord.Interaction):
     """
@@ -88,46 +94,65 @@ async def send_help_message(interaction: discord.Interaction):
     """
     help_embed = discord.Embed(
         title="ダイスボットの使い方",
-        description="TRPGセッション用のダイスを振るためのコマンドです",
+        description="TRPG、ボードゲーム、イベント向けの多機能ボットです",
         color=discord.Color.blue()
     )
     
+    # TRPG向けコマンド
     help_embed.add_field(
-        name="基本的な使い方",
+        name="🎲 ダイスロール（TRPG向け）",
         value=(
             "`/roll NdS` - N個のS面ダイスを振る\n"
             "`/roll d20` - 20面ダイスを1個振る\n"
-            "`/roll 2d6` - 6面ダイスを2個振る"
-        ),
-        inline=False
-    )
-    
-    help_embed.add_field(
-        name="修正値を追加",
-        value=(
+            "`/roll 2d6` - 6面ダイスを2個振る\n"
             "`/roll 1d20+5` - 20面ダイスを振り、結果に5を加える\n"
-            "`/roll 2d6-1` - 6面ダイスを2個振り、結果から1を引く"
+            "`/roll 2d6-1` - 6面ダイスを2個振り、結果から1を引く\n"
+            "`/roll 1d20+2d4` - 複数種類のダイスを振る"
         ),
         inline=False
     )
     
     help_embed.add_field(
-        name="複数のダイス",
+        name="📜 履歴",
+        value="`/history` - あなたの過去10回分のダイスロール履歴を表示",
+        inline=False
+    )
+    
+    # ランダム選択機能（ボードゲーム向け）
+    help_embed.add_field(
+        name="🎯 ランダム選択（ボードゲーム・一般向け）",
         value=(
-            "`/roll 1d20+2d4` - 20面ダイス1個と4面ダイス2個を振る\n"
-            "`/roll 2d8+1d6+3` - 8面ダイス2個と6面ダイス1個を振り、3を加える"
+            "`/choose one [items]` - リストから1つをランダムに選択\n"
+            "`/choose multiple [items] [count] [unique]` - 複数のアイテムを選択\n"
+            "`/choose shuffle [items]` - リストをランダムに並べ替え\n"
+            "`/choose teams [members] [num_teams]` - メンバーをチームに分ける"
+        ),
+        inline=False
+    )
+    
+    # 抽選機能（イベント向け）
+    help_embed.add_field(
+        name="🎊 抽選機能（イベント向け）",
+        value=(
+            "`/lottery draw [participants] [winners_count]` - 参加者から当選者を抽選\n"
+            "`/lottery tiered [participants] [prize_counts]` - 複数賞品の抽選\n"
+            "`/lottery tournament [participants] [rounds]` - トーナメント表作成"
         ),
         inline=False
     )
     
     help_embed.add_field(
-        name="履歴の表示",
-        value="`/history` - あなたの過去10回分のダイスロール履歴を表示します",
+        name="💡 使用例",
+        value=(
+            "**ランダム選択**: `/choose one 食べログ,ぐるなび,ホットペッパー`\n"
+            "**チーム分け**: `/choose teams たろう,はなこ,じろう,けいこ 2`\n"
+            "**抽選**: `/lottery draw 山田,佐藤,鈴木,田中,伊藤 2`"
+        ),
         inline=False
     )
     
     help_embed.add_field(
-        name="制限事項",
+        name="⚙️ 制限事項",
         value=(
             f"ダイスの数: {get_config('MIN_DICE_COUNT', 1)}～{get_config('MAX_DICE_COUNT', 100)}個\n"
             f"ダイスの面数: {get_config('MIN_DICE_SIDES', 2)}～{get_config('MAX_DICE_SIDES', 1000)}面\n"
