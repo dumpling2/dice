@@ -17,6 +17,8 @@ from dice.src.utils.logger import get_logger, setup_logger
 from dice.config.settings import get_config
 from dice.src.commands.roll import setup_roll_command
 from dice.src.commands.history import setup_history_command
+from dice.src.commands.choose import setup_choose_command
+from dice.src.commands.lottery import setup_lottery_command
 
 def start_bot(log_level: int = logging.INFO):
     """
@@ -55,6 +57,8 @@ def start_bot(log_level: int = logging.INFO):
     # コマンドのセットアップ
     setup_roll_command(bot)
     setup_history_command(bot)
+    setup_choose_command(bot)  # ランダム選択コマンドを追加
+    setup_lottery_command(bot)  # 抽選コマンドを追加
     
     # エラーハンドリング（スラッシュコマンドのエラーは各コマンドで捕捉）
     @bot.event
